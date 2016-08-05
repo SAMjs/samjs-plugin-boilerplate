@@ -1,7 +1,7 @@
 {
   "name": "samjs-plugin-boilerplate",
   "description": "",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": "https://github.com/SAMjs/samjs-plugin-boilerplate",
   "author": {
     "name": "Paul Pflugradt",
@@ -14,16 +14,21 @@
   "dependencies": {},
   "devDependencies": {
     "atom-ui-reporter": "0.0.1",
-    "chai": "^3.2.0",
-    "coffee-script": "^1.9.3",
-    "mocha": "^2.2.5",
-    "samjs": "*",
-    "samjs-client": "*",
-    "samjs-plugin-boilerplate-client": "*"
+    "chai": "^3.5.0",
+    "coffee-script": "^1.10.0",
+    "mocha": "^2.5.3",
+    "rimraf": "^2.5.4",
+    "samjs": "^0.2.0",
+    "samjs-client": "^0.2.0",
+    "samjs-plugin-boilerplate-client": "^0.2.0"
   },
   "keywords": [],
   "readmeFilename": "README.md",
   "scripts": {
-    "test": "mocha"
+    "build": "rimraf lib/ && coffee --no-header --compile --output lib/ src/*.coffee",
+    "test": "mocha",
+    "preversion": "npm test",
+    "version": "npm run build && git add .",
+    "postversion": "git push && git push --tags && npm publish"
   }
 }

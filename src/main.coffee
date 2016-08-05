@@ -1,54 +1,50 @@
 # out: ../lib/main.js
 module.exports = (samjs) ->
-  plugin = {}
-  plugin.name = "plugin-boilerplate"
-  plugin.obj =
+  debug = samjs.debug("pluginBoilerplate")
+  debug("some text") # will be available with ENV DEBUG=samjs:pluginBoilerplate
+  return new class Plugin
+    constructor: ->
+      # do something
+    name: "pluginBoilerplate"
     someFunc: ->
-      "will be accessibly under samjs.plugin-boilerplate.someFunc"
-  plugin.options =
-    "default-option":
-      "will be set only if not already set"
-  plugin.configs =
-    defaults: [{
+      "will be accessibly under samjs.pluginBoilerplate.someFunc"
+    options:
+      "default-option":
+        "will be set only if not already set"
+    configs: [{
       name: "default-config"
       isRequired: true
+      read: false
+      write: false
       test: (value) ->
         return samjs.Promise.resolve() if value == "correct"
         return samjs.Promise.reject() if value != "correct"
-      },{
+      hooks:
+        before_Set: ({data,oldData}) ->
+          # will be called only for this config item
+          return {data,oldData}
+    },{
       name: "some-other-config"
       }]
-    mutator: (options) ->
-      plugin.mutatorCalled = true
-      # will be called before each config constructor to change the options obj
-      return options
-    get: (socket) ->
-      # will be called when a config is requested by a client
-      throw new Error "forbidden" unless socket?.authenticated
-    set: (newData, socket) ->
-      # will be called when a config should be set by a client
-      throw new Error "forbidden" unless socket?.authenticated
-      # the config test function will be called with newData afterwards
-      return newData
-    test: (newData, socket) ->
-      # will be called when a config should be tested by a client
-      throw new Error "forbidden" unless socket?.authenticated
-      return newData
-  plugin.models = [
-    {
+    hooks:
+      configs:
+        before_Set: ({data,oldData}) ->
+          # will be called for all config items
+          return {data,oldData}
+    models: [{
       name: "default-model"
       value: "someValue" # not required
       interfaces:
         auth: (socket) ->
-          # will be bound to model instance
-          # socket will live in
-          # socket-io 'plugin-boilerplate-default-modelModel' namespace
-          socket.on "auth", (request)->
+          # this will be bound to model instance
+          # socket will live in socket-io 'auth' namespace
+          socket.on "auth", (request) ->
             if request.token?
               socket.client.auth = true
               response = success:true, content: "success"
               socket.emit "auth.#{request.token}", response
         boilerplate: (socket) ->
+          # socket will live in socket-io 'boilerplate' namespace
           socket.on "get", (request) =>
             if request.token?
               if socket.client.auth
@@ -56,17 +52,12 @@ module.exports = (samjs) ->
               else
                 response = success:false, content: "denied"
               socket.emit "get.#{request.token}", response
-      isExisting: ->
-        return false # should return false if model should be inserted
       startup: ->
         @startupCalled = true
     },{
       name: "default-model-required"
       value: "someValue" # not required
-      interfaces: boilerplate2: (->)
       isRequired: true
-      isExisting: ->
-        return false # should return false if model should be inserted
       installInterface: (socket) ->
         # will be bound to model instance
         # socket will live in
@@ -81,7 +72,7 @@ module.exports = (samjs) ->
             .then (response) ->
               socket.emit "boilerplate.set.#{request.token}", response
               if response.success
-                samjs.emit "checkInstalled"
+                samjs.state.checkInstalled()
         return -> socket.removeAllListeners "boilerplate.set"
       test: (value=@value) ->
         # will be bound to model instance
@@ -89,14 +80,13 @@ module.exports = (samjs) ->
           return samjs.Promise.resolve(value)
         else
           return samjs.Promise.reject()
-    }
-  ]
-  plugin.startup = ->
-    #will be called on samjs.startup, after install
-    plugin.startupCalled = true
-    return samjs.Promise.resolve()
-  plugin.shutdown = ->
-    #will be called on samjs.shutdown
-    plugin.shutdownCalled = true
-    return samjs.Promise.resolve()
-  return plugin
+      }
+    ]
+    startup: ->
+      #will be called on samjs.startup, after install
+      @startupCalled = true
+      return samjs.Promise.resolve()
+    shutdown: ->
+      #will be called on samjs.shutdown
+      @shutdownCalled = true
+      return samjs.Promise.resolve()

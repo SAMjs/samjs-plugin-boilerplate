@@ -21,7 +21,7 @@ describe "samjs", ->
   describe "object", ->
     it "should be accessible", ->
       samjs[pluginBoilerplate.name].someFunc().should
-      .equal "will be accessibly under samjs.plugin-boilerplate.someFunc"
+      .equal "will be accessibly under samjs.pluginBoilerplate.someFunc"
   describe "options", ->
     it "should have defaults", ->
       samjs.options({config:testConfigFile})
@@ -33,8 +33,6 @@ describe "samjs", ->
       samjs.configs()
       opt = samjs.configs["default-config"]
       should.exist opt
-    it "should have mutator called", ->
-      pluginBoilerplate.mutatorCalled.should.be.true
     it "should reject get", (done) ->
       opt.get()
       .catch -> done()
@@ -58,13 +56,13 @@ describe "samjs", ->
           reconnection: false
           autoConnect: false
         })()
-      client.install.onceInConfigMode
+      client.install.onceConfigure
       .return client.install.set "default-config", "correct"
       .then -> done()
       .catch done
     it "should install", (done) ->
       client.plugins(pluginBoilerplateClient)
-      client.install.onceInInstallMode
+      client.install.onceInstall
       .return client.boilerplate.install "rightValue"
       .then -> done()
       .catch done
